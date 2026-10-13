@@ -161,3 +161,29 @@ gcloud beta run deploy citypulse-frontend \
   --allow-unauthenticated \
   --set-env-vars="AGENT_ENGINE_RESOURCE_NAME=projects/671379726052/locations/us-east1/reasoningEngines/932435338377297920,AGENT_DIRECTORY=app"
 ```
+
+---
+
+## 👥 Multi-Tenancy & User Isolation Architecture
+
+### Current Deployment (Shared "Mayoral Situation Room")
+In its current workshop setup, the app is deployed in **shared mode**:
+- **Shared Metropolis State:** All users interact with the same live Firestore `districts` collection. An emergency dispatch or budget cut executed by one user updates the city for everyone viewing the dashboard.
+- **Shared Memory Scope:** The Vertex AI Memory Bank operates under the deployment's default conversation namespace.
+
+### Upgrading to User-Specific Agents (Production Multi-Tenancy)
+To give every user their own isolated Metropolis instance and private agent memory:
+1. **User-Scoped Memory (Vertex AI Memory Bank):**
+   Pass the authenticated user's identity into the memory tool:
+   ```python
+   PreloadMemoryTool(user_id=request.user_id)
+   ```
+   This ensures Mayor Alice and Mayor Bob maintain completely isolated cross-session memories, personal priorities, and preferences.
+2. **Namespaced Firestore Collections:**
+   Scope database operations under a user document:
+   ```python
+   # Multi-tenant path
+   db.collection("users").document(user_id).collection("districts").document(district_id)
+   ```
+3. **Frontend Authentication:**
+   Add Firebase Auth or Google Cloud Identity-Aware Proxy (IAP) to the Cloud Run proxy to extract user JWTs and forward `user_id` headers across the A2A protocol.
