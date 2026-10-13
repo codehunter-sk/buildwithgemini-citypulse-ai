@@ -11,7 +11,7 @@
 ## 🏛️ System Architecture
 
 ```
-[ Browser / Custom Chat UI (Dark Theme) ]
+[ Browser / Split-Screen Dashboard & Chat ]
                   │
                   ▼
 [ FastAPI Proxy on Cloud Run (A2A Protocol Client) ]
@@ -25,6 +25,75 @@
   ├── Meteorological Intelligence (Live Open-Meteo API)
   └── A2UI v0.8 Rich Component Card Rendering
 ```
+
+---
+
+## 🔍 End-to-End Execution Flow (Example Walkthrough)
+
+To understand how CityPulse AI orchestrates requests, here is what happens under the hood when a Mayor asks:
+> **"How did the public react to increase in 10% taxes?"**
+
+```mermaid
+sequenceDiagram
+    autonumber
+    actor User as You (Browser UI)
+    participant Proxy as FastAPI Gateway (Cloud Run)
+    participant A2A as Agent Runtime (Vertex AI)
+    participant Memory as Vertex AI Memory Bank
+    participant LLM as Gemini 2.5 Flash
+    participant Tools as Firestore / DB Tools
+    participant Callback as A2UI Callback
+
+    User->>Proxy: POST /chat {"message": "how did the public react to increase in 10% taxes"}
+    Note over Proxy: Generates Bearer Token via ADC<br/>Maps message to A2A JSON-RPC spec
+    Proxy->>A2A: sendMessage(request) over HTTPS / A2A Protocol
+    
+    rect rgb(240, 248, 255)
+        Note over A2A,Memory: Step 1: Long-Term Memory Retrieval
+        A2A->>Memory: PreloadMemoryTool.query("taxes increase reaction")
+        Memory-->>A2A: Returns past memories (prior budget directives)
+    end
+
+    rect rgb(255, 250, 240)
+        Note over A2A,LLM: Step 2: Reasoning & Tool Dispatch
+        A2A->>LLM: Prompt + History + Memories + Available Tools
+        LLM-->>A2A: Function Call: get_district_status("all")
+        A2A->>Tools: Query Firestore `districts` collection
+        Tools-->>A2A: Returns health indices, budgets, populations, voter status
+    end
+
+    rect rgb(245, 255, 245)
+        Note over A2A,LLM: Step 3: Synthesis & Impact Simulation
+        A2A->>LLM: Tool Results + System Instructions (Political & Municipal Intel)
+        LLM-->>A2A: Synthesizes response: District breakdown, voter approval dip,<br/>praise vs grievances, strategic advice
+    end
+
+    rect rgb(255, 245, 245)
+        Note over A2A,Callback: Step 4: UI Packaging & Memory Persistence
+        A2A->>Callback: a2ui_callback() / generate_memories_callback()
+        Callback-->>Memory: Saves new session memory ("Mayor inquired about 10% tax reaction")
+    end
+
+    A2A-->>Proxy: A2A Events (Text Part + A2UI Surface Update)
+    
+    rect rgb(240, 248, 255)
+        Note over Proxy,User: Step 5: Rendering & Telemetry Refresh
+        Proxy-->>User: JSON Response { "parts": [...] }
+        User->>User: cleanSymbols() converts any macros (e.g., -8% → -12%)
+        User->>User: marked.parse() renders headings, bullets & bold text
+        User->>Proxy: Auto-triggers /api/city-status to sync left dashboard
+    end
+```
+
+### 5-Step Lifecycle:
+1. **Request Ingestion**: The browser dispatches the query to the FastAPI proxy on Cloud Run. The proxy attaches Google Application Default Credentials (ADC) and packages the query into the standard **A2A (Agent-to-Agent)** protocol.
+2. **Context & Memory Preload**: The agent consults **Vertex AI Memory Bank** via `PreloadMemoryTool` to recall earlier fiscal discussions, mayoral directives, or past budget adjustments across sessions.
+3. **Database Grounding**: The LLM queries the live **Firestore** `districts` collection to fetch up-to-date health ratings, population numbers, and existing budget surpluses/deficits.
+4. **Political Simulation & Reasoning**: Using the `Political & Election Intelligence` instructions, Gemini evaluates voter sentiment by district (e.g. Highland suburban tolerance vs Eastside working-class grievance vs Downtown commercial stress) and projects the net effect on re-election vote share.
+5. **Multi-Modal Return & Telemetry Sync**: 
+   - `generate_memories_callback` records the inquiry for future sessions.
+   - `cleanSymbols()` formats mathematical arrows and deltas cleanly in the UI.
+   - The frontend auto-triggers `/api/city-status` to refresh the live meters, tactical 2x2 map, and voter favorability bars simultaneously.
 
 ---
 
