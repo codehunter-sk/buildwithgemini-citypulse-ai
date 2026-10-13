@@ -1,0 +1,1007 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CityPulse AI — Metropolis Crisis & Mayor Advisor</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined">
+<!-- Markdown parser: local static file with CDN fallback -->
+<script src="/marked.min.js"></script>
+<script>
+  if (typeof marked === "undefined") {
+    document.write('<script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"><\/script>');
+  }
+</script>
+<style>
+  :root { 
+    --accent:#0d47a1; 
+    --accent-hover:#1565c0; 
+    --bg:#0b1120; 
+    --panel:#1e293b; 
+    --panel-hover:#24334a; 
+    --text:#f8fafc; 
+    --text-muted:#94a3b8; 
+    --border:#334155; 
+    --success:#10b981; 
+    --warning:#f59e0b; 
+    --danger:#ef4444; 
+  }
+  * { box-sizing:border-box; }
+  body { margin:0; font-family:system-ui, -apple-system, sans-serif; background:var(--bg); color:var(--text); display:flex; flex-direction:column; height:100vh; overflow:hidden; }
+  
+  header { 
+    background:linear-gradient(135deg, #0d47a1, #1e3a8a); 
+    color:#fff; 
+    padding:0.75rem 1.4rem; 
+    font-weight:700; 
+    font-size:1.1rem; 
+    border-bottom:1px solid var(--border); 
+    display:flex; 
+    align-items:center; 
+    justify-content:space-between; 
+    flex-shrink:0; 
+  }
+  .header-left { display:flex; align-items:center; gap:0.6rem; }
+  .badge { background:#e11d48; color:#fff; font-size:0.75rem; padding:0.2rem 0.55rem; border-radius:9999px; font-weight:600; text-transform:uppercase; letter-spacing:0.05em; }
+  .header-meta { font-size:0.8rem; color:#93c5fd; font-weight:normal; }
+
+  /* Main 50/50 Split Layout */
+  .app-container {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    flex: 1;
+    overflow: hidden;
+  }
+
+  /* LEFT SCREEN: Metropolis Status Dashboard (Always On) */
+  #dashboard-screen {
+    background: #0f172a;
+    border-right: 1px solid var(--border);
+    display: flex;
+    flex-direction: column;
+    overflow-y: auto;
+    padding: 1.1rem;
+    gap: 0.9rem;
+  }
+
+  .dash-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: var(--panel);
+    padding: 0.75rem 1rem;
+    border-radius: 10px;
+    border: 1px solid var(--border);
+  }
+  .dash-title { font-size: 1.05rem; font-weight: 700; color: #93c5fd; display:flex; align-items:center; gap:0.4rem; }
+  .dash-controls { display:flex; align-items:center; gap:0.6rem; font-size:0.8rem; color:var(--text-muted); }
+  .btn-refresh {
+    background: #1e3a8a;
+    border: 1px solid #3b82f6;
+    color: #fff;
+    padding: 0.35rem 0.75rem;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 0.8rem;
+    font-weight: 600;
+    transition: background 0.15s;
+  }
+  .btn-refresh:hover { background: #2563eb; }
+
+  /* Overview Aggregate Banner */
+  .overview-bar {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 0.85rem 1rem;
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 0.8rem;
+    text-align: center;
+  }
+  .metric-block { display:flex; flex-direction:column; gap:0.25rem; }
+  .metric-num { font-size: 1.3rem; font-weight: 800; color: #38bdf8; }
+  .metric-lbl { font-size: 0.75rem; color: var(--text-muted); text-transform:uppercase; letter-spacing:0.04em; }
+
+  /* POLITICAL INCLINATION & RE-ELECTION CARD */
+  .political-card {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 0.95rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.65rem;
+  }
+  .pol-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .pol-title { font-size: 0.92rem; font-weight: 700; color: #f1f5f9; display:flex; align-items:center; gap:0.4rem; }
+  .pol-pill {
+    font-size: 0.75rem;
+    font-weight: 700;
+    padding: 0.2rem 0.55rem;
+    border-radius: 9999px;
+  }
+  .pol-pill-lead { background: rgba(16,185,129,0.2); color: #34d399; border: 1px solid rgba(16,185,129,0.4); }
+  .pol-pill-tossup { background: rgba(245,158,11,0.2); color: #fbbf24; border: 1px solid rgba(245,158,11,0.4); }
+  .pol-pill-behind { background: rgba(239,68,68,0.2); color: #f87171; border: 1px solid rgba(239,68,68,0.4); }
+
+  .pol-meter-box { display:flex; flex-direction:column; gap:0.25rem; }
+  .pol-meter-labels { display:flex; justify-content:space-between; font-size:0.75rem; color:var(--text-muted); }
+  .pol-meter-track { height:10px; background:#0f172a; border-radius:5px; overflow:hidden; border:1px solid var(--border); }
+  .pol-meter-fill { height:100%; border-radius:5px; transition:width 0.4s ease; }
+
+  /* DUAL PROS & CONS INTELLIGENCE SECTION */
+  .sentiment-split {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.6rem;
+    margin-top: 0.2rem;
+  }
+  .sentiment-box {
+    background: #0f172a;
+    border-radius: 8px;
+    padding: 0.65rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+    border: 1px solid rgba(255,255,255,0.06);
+  }
+  .sentiment-box.good { border-left: 3px solid #10b981; }
+  .sentiment-box.bad { border-left: 3px solid #ef4444; }
+  .sent-title { font-size: 0.78rem; font-weight: 700; display:flex; align-items:center; gap:0.3rem; }
+  .sent-title.good { color: #34d399; }
+  .sent-title.bad { color: #f87171; }
+  .sent-list { margin:0; padding-left:1rem; font-size:0.74rem; color:#cbd5e1; display:flex; flex-direction:column; gap:0.25rem; }
+  .sent-list li { line-height:1.35; }
+
+  /* Interactive 2x2 Tactical Map */
+  .map-section {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 0.85rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+  .map-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 0.85rem;
+    font-weight: 700;
+    color: #cbd5e1;
+  }
+  .map-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    grid-template-rows: 1fr 1fr;
+    gap: 0.6rem;
+    height: 130px;
+  }
+  .map-zone {
+    border-radius: 8px;
+    padding: 0.55rem 0.75rem;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    cursor: pointer;
+    border: 1px solid rgba(255,255,255,0.1);
+    background: #0b1120;
+    position: relative;
+    overflow: hidden;
+    transition: transform 0.15s, border-color 0.15s;
+  }
+  .map-zone:hover { transform: scale(1.02); }
+  .map-zone-title { font-size: 0.82rem; font-weight: 700; color: #f8fafc; display:flex; align-items:center; gap:0.35rem; }
+  .map-zone-meta { display:flex; justify-content:space-between; align-items:flex-end; font-size: 0.75rem; font-weight: 600; }
+  
+  @keyframes pulseWarning {
+    0% { box-shadow: 0 0 0 0 rgba(245, 158, 11, 0.4); border-color: rgba(245, 158, 11, 0.8); }
+    70% { box-shadow: 0 0 0 8px rgba(245, 158, 11, 0); border-color: rgba(245, 158, 11, 0.4); }
+    100% { box-shadow: 0 0 0 0 rgba(245, 158, 11, 0); border-color: rgba(245, 158, 11, 0.8); }
+  }
+  @keyframes pulseCritical {
+    0% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.6); border-color: rgba(239, 68, 68, 0.9); }
+    70% { box-shadow: 0 0 0 10px rgba(239, 68, 68, 0); border-color: rgba(239, 68, 68, 0.4); }
+    100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); border-color: rgba(239, 68, 68, 0.9); }
+  }
+  .map-zone.zone-stable { border-color: rgba(16, 185, 129, 0.4); background: radial-gradient(circle at top left, #064e3b 0%, #0b1120 70%); }
+  .map-zone.zone-warning { animation: pulseWarning 2s infinite; background: radial-gradient(circle at top left, #78350f 0%, #0b1120 70%); }
+  .map-zone.zone-critical { animation: pulseCritical 1.5s infinite; background: radial-gradient(circle at top left, #7f1d1d 0%, #0b1120 70%); }
+
+  /* District Cards Grid */
+  .districts-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 0.8rem;
+  }
+
+  .district-card {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 0.95rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.55rem;
+    transition: border-color 0.15s ease;
+  }
+  .district-card:hover { border-color: #60a5fa; }
+  .d-card-top { display:flex; justify-content:space-between; align-items:center; }
+  .d-name { font-size: 0.98rem; font-weight: 700; color: #f1f5f9; display:flex; align-items:center; gap:0.4rem; }
+  .d-status-pill {
+    font-size: 0.75rem;
+    padding: 0.2rem 0.55rem;
+    border-radius: 9999px;
+    font-weight: 700;
+    text-transform: uppercase;
+  }
+  .status-stable { background: rgba(16,185,129,0.2); color: #34d399; border: 1px solid rgba(16,185,129,0.4); }
+  .status-warning { background: rgba(245,158,11,0.2); color: #fbbf24; border: 1px solid rgba(245,158,11,0.4); }
+  .status-critical { background: rgba(239,68,68,0.2); color: #f87171; border: 1px solid rgba(239,68,68,0.4); }
+
+  /* Trend Badge */
+  .trend-badge {
+    font-size: 0.72rem;
+    font-weight: 700;
+    padding: 0.15rem 0.4rem;
+    border-radius: 4px;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.2rem;
+  }
+  .trend-up { color: #34d399; background: rgba(16,185,129,0.15); }
+  .trend-down { color: #f87171; background: rgba(239,68,68,0.15); }
+  .trend-same { color: #94a3b8; background: rgba(148,163,184,0.15); }
+
+  .health-container { display:flex; flex-direction:column; gap:0.3rem; }
+  .health-labels { display:flex; justify-content:space-between; font-size:0.75rem; color:var(--text-muted); align-items:center; }
+  .health-bar-track { height:8px; background:#0f172a; border-radius:4px; overflow:hidden; border:1px solid var(--border); }
+  .health-bar-fill { height:100%; border-radius:4px; transition: width 0.4s ease; }
+
+  .d-meta-row {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.8rem;
+    color: var(--text-muted);
+    border-top: 1px solid rgba(255,255,255,0.06);
+    padding-top: 0.45rem;
+  }
+  .d-meta-item strong { color: #f1f5f9; }
+
+  .d-crisis-box {
+    background: rgba(15,23,42,0.8);
+    border-left: 3px solid #f59e0b;
+    padding: 0.45rem 0.65rem;
+    border-radius: 4px;
+    font-size: 0.8rem;
+  }
+  .d-crisis-box.critical { border-left-color: #ef4444; }
+  .d-crisis-title { font-weight: 700; color: #fbbf24; }
+  .d-crisis-desc { color: #cbd5e1; font-size:0.75rem; margin-top:0.15rem; }
+
+  /* Quick action buttons on district cards */
+  .d-action-row {
+    display: flex;
+    gap: 0.4rem;
+    margin-top: 0.2rem;
+  }
+  .btn-quick-act {
+    flex: 1;
+    background: #0f172a;
+    border: 1px solid #334155;
+    color: #93c5fd;
+    padding: 0.3rem 0.6rem;
+    border-radius: 6px;
+    font-size: 0.74rem;
+    cursor: pointer;
+    font-weight: 600;
+    transition: all 0.15s;
+    text-align: center;
+  }
+  .btn-quick-act:hover {
+    background: #1e3a8a;
+    border-color: #3b82f6;
+    color: #fff;
+  }
+
+  /* RIGHT SCREEN: Mayoral Advisor Chat */
+  #chat-screen {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    overflow: hidden;
+    background: var(--bg);
+  }
+
+  #log { 
+    flex: 1; 
+    overflow-y: auto; 
+    padding: 1.2rem; 
+    width: 100%; 
+  }
+  .msg { margin:.7rem 0; }
+  .msg.user { text-align:right; }
+  .bubble { display:inline-block; padding:.8rem 1.1rem; border-radius:12px; background:var(--panel); border:1px solid var(--border); text-align:left; max-width:92%; color:#f1f5f9; line-height:1.6; word-break:break-word; }
+  .msg.user .bubble { background:var(--accent); color:#fff; border:none; white-space:pre-wrap; }
+  
+  /* Rich markdown typography inside agent bubbles */
+  .bubble h1, .bubble h2, .bubble h3, .bubble h4, .bubble h5, .bubble h6 { margin:0.8rem 0 0.4rem; color:#60a5fa; font-weight:700; }
+  .bubble h1 { font-size:1.35rem; }
+  .bubble h2 { font-size:1.2rem; color:#93c5fd; }
+  .bubble h3 { font-size:1.05rem; color:#bfdbfe; }
+  .bubble h4 { font-size:0.95rem; }
+  .bubble p { margin:0.4rem 0; }
+  .bubble p:first-child { margin-top:0; }
+  .bubble p:last-child { margin-bottom:0; }
+  .bubble ul, .bubble ol { margin:0.4rem 0; padding-left:1.4rem; }
+  .bubble li { margin:0.25rem 0; }
+  .bubble hr { border:none; border-top:1px solid var(--border); margin:0.8rem 0; }
+  .bubble blockquote { margin:0.5rem 0; padding-left:0.8rem; border-left:3px solid #3b82f6; color:#94a3b8; }
+  .bubble code { background:#0f172a; padding:0.15rem 0.35rem; border-radius:4px; font-family:monospace; font-size:0.9em; color:#38bdf8; }
+  .bubble pre { background:#0f172a; padding:0.75rem; border-radius:8px; overflow-x:auto; border:1px solid var(--border); margin:0.5rem 0; }
+  .bubble pre code { background:transparent; padding:0; }
+  .bubble a { color:#38bdf8; text-decoration:none; }
+  .bubble a:hover { text-decoration:underline; }
+  .bubble img { max-width:100%; height:auto; border-radius:8px; border:1px solid var(--border); margin:0.6rem 0; display:block; box-shadow:0 4px 6px -1px rgba(0,0,0,.4); }
+  .bubble table { border-collapse:collapse; width:100%; margin:0.6rem 0; font-size:0.9rem; }
+  .bubble th, .bubble td { border:1px solid var(--border); padding:0.4rem 0.6rem; text-align:left; }
+  .bubble th { background:#334155; color:#f8fafc; }
+  .bubble.rich { background:transparent; border:none; padding:0; max-width:100%; }
+
+  /* Chips and bottom input */
+  .chips { display:flex; gap:0.4rem; padding:0.5rem 1rem; width:100%; overflow-x:auto; border-top:1px solid rgba(255,255,255,0.05); background:#0f172a; flex-shrink:0; }
+  .chip { background:var(--panel); border:1px solid var(--border); color:#cbd5e1; border-radius:20px; padding:0.35rem 0.75rem; font-size:0.8rem; cursor:pointer; white-space:nowrap; transition:all 0.2s; }
+  .chip:hover { background:#334155; color:#fff; border-color:#64748b; }
+  
+  form { display:flex; gap:.5rem; padding:0.8rem 1rem; border-top:1px solid var(--border); background:var(--panel); width:100%; flex-shrink:0; }
+  input { flex:1; padding:.75rem 1rem; border:1px solid var(--border); border-radius:8px; font-size:0.95rem; background:#0f172a; color:#fff; }
+  input:focus { outline:none; border-color:#3b82f6; }
+  button.btn-send { padding:.75rem 1.4rem; border:none; border-radius:8px; background:var(--accent); color:#fff; font-weight:600; cursor:pointer; transition:background 0.2s; }
+  button.btn-send:hover { background:var(--accent-hover); }
+
+  /* A2UI card styles */
+  .a2card { border:1px solid var(--border); border-radius:12px; padding:1.2rem; background:var(--panel); box-shadow:0 4px 6px -1px rgba(0,0,0,.3); max-width:100%; color:#f8fafc; }
+  .a2card + .a2card, .a2col > .a2card { margin-top:.6rem; }
+  .a2col { display:flex; flex-direction:column; gap:.5rem; }
+  .a2row { display:flex; flex-direction:row; gap:.6rem; align-items:center; flex-wrap:wrap; }
+  .a2row.between { justify-content:space-between; }
+  .a2text { margin:0; line-height:1.4; color:#f1f5f9; }
+  .a2text.a2-h1 { font-size:1.5rem; font-weight:700; color:#60a5fa; }
+  .a2text.a2-h2 { font-size:1.25rem; font-weight:700; color:#93c5fd; }
+  .a2text.a2-h3 { font-size:1.1rem; font-weight:600; color:#bfdbfe; }
+  .a2text.a2-h4 { font-size:1rem; font-weight:600; }
+  .a2text.a2-caption { font-size:.85rem; color:#94a3b8; }
+  .a2divider { border:none; border-top:1px solid var(--border); margin:.6rem 0; width:100%; }
+  .a2img { max-width:100%; border-radius:8px; display:block; border:1px solid var(--border); }
+  .material-symbols-outlined { font-family:'Material Symbols Outlined'; font-size:1.25rem; line-height:1; vertical-align:middle; color:#60a5fa; }
+
+  /* Responsive behavior for mobile / smaller screens */
+  @media (max-width: 900px) {
+    .app-container { grid-template-columns: 1fr; overflow-y:auto; }
+    #dashboard-screen { height: 440px; border-right:none; border-bottom: 2px solid var(--border); }
+    #chat-screen { height: 600px; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="header-left">
+    <span>🏛️ CityPulse AI</span>
+    <span class="badge">Live Command</span>
+  </div>
+  <div class="header-meta">
+    <span>Metropolis Municipal Operating Console</span>
+  </div>
+</header>
+
+<div class="app-container">
+  <!-- LEFT SCREEN: Continuous City Status (Updates every 5 mins) -->
+  <section id="dashboard-screen">
+    <div class="dash-header">
+      <div class="dash-title">
+        <span>📊 Metropolis Pulse</span>
+      </div>
+      <div class="dash-controls">
+        <span id="refresh-timer">Sync: 5:00</span>
+        <button type="button" class="btn-refresh" onclick="fetchCityStatus()">↻ Refresh</button>
+      </div>
+    </div>
+
+    <!-- Overview Aggregate Banner -->
+    <div class="overview-bar">
+      <div class="metric-block">
+        <span class="metric-num" id="stat-avg-health">--%</span>
+        <span class="metric-lbl">Avg Health</span>
+      </div>
+      <div class="metric-block">
+        <span class="metric-num" id="stat-crises">--</span>
+        <span class="metric-lbl">Active Crises</span>
+      </div>
+      <div class="metric-block">
+        <span class="metric-num" id="stat-budget">$--</span>
+        <span class="metric-lbl">Reserves</span>
+      </div>
+    </div>
+
+    <!-- POLITICAL RE-ELECTION OUTLOOK & VOTER INCLINATION -->
+    <div class="political-card">
+      <div class="pol-header">
+        <div class="pol-title">
+          <span>🗳️ Re-Election Outlook</span>
+        </div>
+        <span id="pol-verdict-pill" class="pol-pill pol-pill-lead">Favored</span>
+      </div>
+      <div class="pol-meter-box">
+        <div class="pol-meter-labels">
+          <span>Projected Citizen Vote Share</span>
+          <strong id="pol-pct-label">--%</strong>
+        </div>
+        <div class="pol-meter-track">
+          <div id="pol-meter-fill" class="pol-meter-fill" style="width:50%; background:linear-gradient(90deg, #10b981, #34d399);"></div>
+        </div>
+      </div>
+
+      <!-- DUAL PROS & CONS INTELLIGENCE FEED -->
+      <div class="sentiment-split">
+        <div class="sentiment-box good">
+          <div class="sent-title good">
+            <span>🟢 What's Working For You</span>
+          </div>
+          <ul class="sent-list" id="sent-good-list">
+            <li>Loading voter sentiment…</li>
+          </ul>
+        </div>
+        <div class="sentiment-box bad">
+          <div class="sent-title bad">
+            <span>🔴 Citizen Grievances</span>
+          </div>
+          <ul class="sent-list" id="sent-bad-list">
+            <li>Loading grievances…</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <!-- Interactive 2x2 Tactical Metropolis Map -->
+    <div class="map-section">
+      <div class="map-header">
+        <span>🗺️ Tactical Metropolis Grid</span>
+        <span style="font-size:0.75rem; color:#94a3b8;">Click zone to inspect</span>
+      </div>
+      <div class="map-grid" id="tactical-map">
+        <!-- Zone blocks injected dynamically -->
+      </div>
+    </div>
+
+    <!-- District Cards Container -->
+    <div class="districts-grid" id="districts-list">
+      <div style="text-align:center; padding:2rem; color:var(--text-muted);">
+        Loading live district telemetry…
+      </div>
+    </div>
+  </section>
+
+  <!-- RIGHT SCREEN: Interactive Mayoral Advisory Chat -->
+  <section id="chat-screen">
+    <div id="log"></div>
+    <div class="chips">
+      <button type="button" class="chip" onclick="fillPrompt('Analyze my re-election outlook: what issues are threatening my mayoral poll numbers and how do we fix them?')">🗳️ Re-Election Briefing</button>
+      <button type="button" class="chip" onclick="fillPrompt('Report on our industrial and downtown district health status')">📊 District Status</button>
+      <button type="button" class="chip" onclick="fillPrompt('Dispatch 2 hazmat units to industrial district to contain chemical leaks')">🚨 Dispatch Hazmat</button>
+      <button type="button" class="chip" onclick="fillPrompt('Generate a crisis snapshot rendering of industrial district with smokestacks')">📸 Crisis Snapshot</button>
+      <button type="button" class="chip" onclick="fillPrompt('Check live weather conditions across the metropolis')">🌤️ Live Weather</button>
+    </div>
+    <form id="form">
+      <input id="input" placeholder="Advise the Mayor, manage political sentiment, or dispatch units…" autocomplete="off" autofocus>
+      <button class="btn-send">Send</button>
+    </form>
+  </section>
+</div>
+
+<script>
+const log = document.getElementById("log");
+const form = document.getElementById("form");
+const input = document.getElementById("input");
+const districtsList = document.getElementById("districts-list");
+const tacticalMap = document.getElementById("tactical-map");
+const statAvgHealth = document.getElementById("stat-avg-health");
+const statCrises = document.getElementById("stat-crises");
+const statBudget = document.getElementById("stat-budget");
+const refreshTimer = document.getElementById("refresh-timer");
+
+// Political Re-Election DOM handles
+const polVerdictPill = document.getElementById("pol-verdict-pill");
+const polPctLabel = document.getElementById("pol-pct-label");
+const polMeterFill = document.getElementById("pol-meter-fill");
+const sentGoodList = document.getElementById("sent-good-list");
+const sentBadList = document.getElementById("sent-bad-list");
+
+// In-memory cache for Trend tracking
+let previousHealthMap = {};
+
+function el(tag, cls, text) { 
+  const e = document.createElement(tag); 
+  if (cls) e.className = cls; 
+  if (text != null) e.textContent = text; 
+  return e; 
+}
+
+function bubble(who) {
+  const m = el("div", "msg " + who);
+  const b = el("div", "bubble");
+  m.appendChild(b); 
+  log.appendChild(m); 
+  log.scrollTop = log.scrollHeight;
+  return b;
+}
+
+/* ----------------------------------------------------------------------------
+ * A2UI mini-renderer (v0.8 Basic Catalog subset).
+ * -------------------------------------------------------------------------- */
+function boundStr(v) {
+  if (v == null) return "";
+  if (typeof v === "string") return v;
+  if (typeof v.literalString === "string") return v.literalString;
+  return "";
+}
+
+function childIds(container) {
+  const c = container.children;
+  if (!c) return [];
+  if (Array.isArray(c)) return c;
+  if (Array.isArray(c.explicitList)) return c.explicitList;
+  return [];
+}
+
+function iconName(v) {
+  if (!v) return "help";
+  const map = {
+    ALERT: "warning", WARNING: "warning", ERROR: "error", INFO: "info",
+    CHECK: "check_circle", CHECK_CIRCLE: "check_circle", CLOSE: "close",
+    PERSON: "person", GROUP: "group", HOME: "home", SEARCH: "search",
+    SETTINGS: "settings", STAR: "star", FAVORITE: "favorite",
+    LOCATION_ON: "location_on", REFRESH: "refresh", DOWNLOAD: "download",
+    UPLOAD: "upload", SHARE: "share", SEND: "send", MORE_VERT: "more_vert",
+  };
+  return map[String(v).toUpperCase()] || String(v).toLowerCase();
+}
+
+function buildNode(id, comps, visited) {
+  if (!id || visited.has(id)) return null;
+  const spec = comps[id];
+  if (!spec) return null;
+  visited.add(id);
+  const type = Object.keys(spec)[0];
+  const props = spec[type] || {};
+
+  switch (type) {
+    case "Card": {
+      const card = el("div", "a2card");
+      for (const cid of childIds(props)) {
+        const child = buildNode(cid, comps, visited);
+        if (child) card.appendChild(child);
+      }
+      return card;
+    }
+    case "Column": {
+      const col = el("div", "a2col");
+      for (const cid of childIds(props)) {
+        const child = buildNode(cid, comps, visited);
+        if (child) col.appendChild(child);
+      }
+      return col;
+    }
+    case "Row": {
+      const row = el("div", "a2row" + (props.alignment === "SPACE_BETWEEN" ? " between" : ""));
+      for (const cid of childIds(props)) {
+        const child = buildNode(cid, comps, visited);
+        if (child) row.appendChild(child);
+      }
+      return row;
+    }
+    case "List": {
+      const col = el("div", "a2col");
+      for (const cid of childIds(props)) {
+        const child = buildNode(cid, comps, visited);
+        if (child) col.appendChild(child);
+      }
+      return col;
+    }
+    case "Text": {
+      const p = el("p", "a2text");
+      const usage = props.usage || "BODY";
+      if (usage === "HEADING_1") p.classList.add("a2-h1");
+      else if (usage === "HEADING_2") p.classList.add("a2-h2");
+      else if (usage === "HEADING_3") p.classList.add("a2-h3");
+      else if (usage === "HEADING_4") p.classList.add("a2-h4");
+      else if (usage === "CAPTION") p.classList.add("a2-caption");
+      p.textContent = boundStr(props.text);
+      return p;
+    }
+    case "Divider": return el("hr", "a2divider");
+    case "Image": {
+      const src = boundStr(props.url);
+      if (!/^https?:\/\//i.test(src)) return null;
+      const img = el("img", "a2img"); 
+      img.src = src; 
+      img.alt = boundStr(props.alt) || ""; 
+      return img;
+    }
+    case "Icon": {
+      const s = el("span", "material-symbols-outlined"); 
+      s.textContent = iconName(boundStr(props.name) || props.name); 
+      return s;
+    }
+    default:
+      return null;
+  }
+}
+
+function renderSurface(messages, container) {
+  const comps = {};
+  const roots = [];
+  for (const m of messages) {
+    if (m.beginRendering && typeof m.beginRendering.root === "string") roots.push(m.beginRendering.root);
+    const su = m.surfaceUpdate;
+    if (su && Array.isArray(su.components)) {
+      for (const c of su.components) {
+        if (c && c.id && c.component) comps[c.id] = c.component;
+      }
+    }
+  }
+  let rootIds = roots.filter(r => comps[r]);
+  if (rootIds.length === 0) {
+    const referenced = new Set();
+    for (const id in comps) {
+      const spec = comps[id];
+      childIds(spec[Object.keys(spec)[0]] || {}).forEach(c => referenced.add(c));
+    }
+    rootIds = Object.keys(comps).filter(id => !referenced.has(id));
+  }
+  let drew = false;
+  for (const rid of rootIds) {
+    const node = buildNode(rid, comps, new Set());
+    if (node) { container.appendChild(node); drew = true; }
+  }
+  return drew;
+}
+
+function flattenText(messages) {
+  const out = [];
+  for (const m of messages) {
+    const su = m.surfaceUpdate;
+    if (su && Array.isArray(su.components)) {
+      for (const c of su.components) {
+        if (c && c.component && c.component.Text) out.push(boundStr(c.component.Text.text));
+      }
+    }
+  }
+  return out.join("\n").trim();
+}
+
+function renderReply(b, parts) {
+  b.textContent = "";
+  const texts = parts.filter(p => p && (p.kind === "text" || (!p.kind && p.text))).map(p => p.text || "");
+  const a2ui = parts.filter(p => p && p.kind === "a2ui" && p.data).map(p => p.data);
+
+  const textStr = texts.join("\n\n").trim();
+  if (textStr) {
+    const textNode = el("div", "reply-content");
+    if (typeof marked !== "undefined" && typeof marked.parse === "function") {
+      try {
+        textNode.innerHTML = marked.parse(textStr);
+      } catch (e) {
+        textNode.textContent = textStr;
+      }
+    } else {
+      textNode.textContent = textStr;
+    }
+    b.appendChild(textNode);
+  }
+
+  if (a2ui.length) {
+    b.classList.add("rich");
+    if (!renderSurface(a2ui, b)) b.appendChild(el("div", null, flattenText(a2ui) || "(no card content)"));
+  }
+  if (!b.childNodes.length) b.textContent = "(no response)";
+  log.scrollTop = log.scrollHeight;
+}
+
+/* ----------------------------------------------------------------------------
+ * Chat Form Submission
+ * -------------------------------------------------------------------------- */
+form.addEventListener("submit", async (ev) => {
+  ev.preventDefault();
+  const text = input.value.trim();
+  if (!text) return;
+  bubble("user").textContent = text;
+  input.value = "";
+  const b = bubble("agent"); 
+  b.textContent = "…";
+  try {
+    const res = await fetch("/chat", { 
+      method: "POST", 
+      headers: { "Content-Type": "application/json" }, 
+      body: JSON.stringify({ message: text }) 
+    });
+    const raw = await res.text();
+    let data;
+    try { data = JSON.parse(raw); }
+    catch { throw new Error("Server returned non-JSON: " + raw.slice(0, 300)); }
+    renderReply(b, data.parts || []);
+    // Auto-refresh telemetry after action
+    setTimeout(fetchCityStatus, 1500);
+  } catch (e) {
+    b.textContent = "Error: " + e.message;
+  }
+});
+
+function fillPrompt(txt) {
+  input.value = txt;
+  form.dispatchEvent(new Event("submit", { cancelable: true }));
+}
+
+/* ----------------------------------------------------------------------------
+ * Live Metropolis Telemetry & Auto-Refresh (5-Minute Loop)
+ * -------------------------------------------------------------------------- */
+let countdownSeconds = 300; // 5 minutes
+
+async function fetchCityStatus() {
+  try {
+    const res = await fetch("/api/city-status");
+    if (!res.ok) throw new Error("HTTP " + res.status);
+    const data = await res.json();
+    renderCityStatus(data.districts || []);
+    resetCountdown();
+  } catch (err) {
+    console.error("Failed to fetch city status:", err);
+    refreshTimer.textContent = "Telemetry sync offline";
+  }
+}
+
+function renderCityStatus(districts) {
+  if (!districts || districts.length === 0) {
+    districtsList.innerHTML = '<div style="text-align:center; padding:1.5rem; color:#94a3b8;">No district telemetry found.</div>';
+    return;
+  }
+
+  // Consistent 2x2 map grid order:
+  // [0] Downtown (NW), [1] Highland (NE)
+  // [2] Waterfront (SW), [3] Industrial (SE)
+  const order = ["downtown", "highland", "waterfront", "industrial"];
+  districts.sort((a, b) => order.indexOf(a.id) - order.indexOf(b.id));
+
+  let totalHealth = 0;
+  let activeCrisesCount = 0;
+  let totalBudget = 0;
+  let totalPopulation = 0;
+  let weightedApproval = 0;
+
+  const goodThings = [];
+  const badThings = [];
+
+  districtsList.innerHTML = "";
+  tacticalMap.innerHTML = "";
+
+  const districtIcons = {
+    downtown: "🏙️",
+    highland: "🌲",
+    waterfront: "⚓",
+    industrial: "🏭"
+  };
+
+  for (const d of districts) {
+    const health = d.health_index != null ? d.health_index : 70;
+    const pop = d.population || 50000;
+    const crises = d.active_crises || [];
+    const units = d.dispatched_units || [];
+
+    totalHealth += health;
+    activeCrisesCount += crises.length;
+    totalBudget += (d.budget || 0);
+    totalPopulation += pop;
+
+    // Calculate Political Voter Inclination per District:
+    // Base approval is derived from health index, penalized by crises, boosted by active emergency units
+    let districtApproval = Math.round(health * 0.9 - crises.length * 15 + units.length * 3);
+    districtApproval = Math.max(12, Math.min(96, districtApproval));
+    weightedApproval += districtApproval * pop;
+
+    // Categorize Political Pros vs Cons for the Mayor
+    const dName = d.name ? d.name.split(' ')[0] : d.id;
+    if (health >= 80 && crises.length === 0) {
+      goodThings.push(`<strong>${dName}</strong>: ${health}% approval — citizens praise reliable public utilities.`);
+    } else if (units.length > 0) {
+      goodThings.push(`<strong>${dName}</strong>: Visible emergency presence (${units.length} units deployed) calming voters.`);
+    }
+
+    if (crises.length > 0) {
+      badThings.push(`<strong>${dName}</strong>: Outrage over active <em>${crises.join(', ')}</em> (${districtApproval}% voter favorability).`);
+    } else if (health < 70) {
+      badThings.push(`<strong>${dName}</strong>: Voters frustrated with deteriorating infrastructure (${health}% health index).`);
+    }
+
+    let statusCls = "status-stable";
+    let zoneCls = "zone-stable";
+    let statusLabel = "Stable";
+    let barColor = "linear-gradient(90deg, #10b981, #34d399)";
+
+    if (health < 50 || crises.length >= 2) {
+      statusCls = "status-critical";
+      zoneCls = "zone-critical";
+      statusLabel = "Critical";
+      barColor = "linear-gradient(90deg, #ef4444, #f87171)";
+    } else if (health < 75 || crises.length >= 1) {
+      statusCls = "status-warning";
+      zoneCls = "zone-warning";
+      statusLabel = "Warning";
+      barColor = "linear-gradient(90deg, #f59e0b, #fbbf24)";
+    }
+
+    // Trend calculation
+    const prevHealth = previousHealthMap[d.id];
+    let trendHtml = '<span class="trend-badge trend-same">● Stable</span>';
+    if (prevHealth !== undefined) {
+      const diff = health - prevHealth;
+      if (diff > 0) {
+        trendHtml = `<span class="trend-badge trend-up">▲ +${diff}%</span>`;
+      } else if (diff < 0) {
+        trendHtml = `<span class="trend-badge trend-down">▼ ${diff}%</span>`;
+      }
+    }
+    previousHealthMap[d.id] = health;
+
+    // Tactical Map Zone
+    const icon = districtIcons[d.id] || "📍";
+    const zone = el("div", "map-zone " + zoneCls);
+    zone.onclick = () => fillPrompt(`Give me a detailed tactical assessment of ${d.name || d.id} and suggest immediate mayoral actions.`);
+    zone.innerHTML = `
+      <div class="map-zone-title">${icon} ${dName}</div>
+      <div class="map-zone-meta">
+        <span style="color:${health >= 75 ? '#34d399' : (health >= 50 ? '#fbbf24' : '#f87171')}; font-size:0.85rem;">${health}%</span>
+        <span style="font-size:0.7rem; color:#94a3b8;">${crises.length ? '🚨 Alert' : '🟢 OK'}</span>
+      </div>
+    `;
+    tacticalMap.appendChild(zone);
+
+    // Build Detailed District Card
+    const card = el("div", "district-card");
+    
+    // Top row with Trend badge
+    const topRow = el("div", "d-card-top");
+    topRow.innerHTML = `
+      <div style="display:flex; align-items:center; gap:0.4rem;">
+        <span class="d-name">${icon} ${d.name || d.id}</span>
+        ${trendHtml}
+      </div>
+      <span class="d-status-pill ${statusCls}">${statusLabel} (${health}%)</span>
+    `;
+    card.appendChild(topRow);
+
+    // Health meter
+    const healthBox = el("div", "health-container");
+    healthBox.innerHTML = `
+      <div class="health-labels">
+        <span>Municipal Health Index</span>
+        <span>${health}% (Voter Approval: ${districtApproval}%)</span>
+      </div>
+      <div class="health-bar-track">
+        <div class="health-bar-fill" style="width:${health}%; background:${barColor};"></div>
+      </div>
+    `;
+    card.appendChild(healthBox);
+
+    // Crisis info
+    if (crises.length > 0) {
+      const cBox = el("div", "d-crisis-box" + (statusLabel === "Critical" ? " critical" : ""));
+      cBox.innerHTML = `
+        <div class="d-crisis-title">⚠️ ${crises.join(", ")}</div>
+        <div class="d-crisis-desc">${d.last_incident || "Incident responders deployed"}</div>
+      `;
+      card.appendChild(cBox);
+    }
+
+    // Bottom meta
+    const metaRow = el("div", "d-meta-row");
+    const popFormatted = pop.toLocaleString();
+    const bud = ((d.budget || 0) / 1000000).toFixed(1);
+    const resp = units.length;
+    metaRow.innerHTML = `
+      <span class="d-meta-item">Pop: <strong>${popFormatted}</strong></span>
+      <span class="d-meta-item">Budget: <strong>$${bud}M</strong></span>
+      <span class="d-meta-item">Units: <strong>${resp} active</strong></span>
+    `;
+    card.appendChild(metaRow);
+
+    // Quick Action button
+    const actionRow = el("div", "d-action-row");
+    let quickPrompt = `Report on status and active incidents in ${d.name || d.id}`;
+    let btnLabel = `🔍 Inspect ${d.id}`;
+    if (crises.length > 0) {
+      quickPrompt = `Dispatch emergency response teams to ${d.name || d.id} to handle ${crises[0]}`;
+      btnLabel = `🚨 Dispatch to ${d.id}`;
+    }
+    actionRow.innerHTML = `
+      <button type="button" class="btn-quick-act" onclick="fillPrompt('${quickPrompt}')">${btnLabel}</button>
+    `;
+    card.appendChild(actionRow);
+
+    districtsList.appendChild(card);
+  }
+
+  // Update top metrics
+  const avg = Math.round(totalHealth / districts.length);
+  statAvgHealth.textContent = avg + "%";
+  statAvgHealth.style.color = avg >= 75 ? "#34d399" : (avg >= 55 ? "#fbbf24" : "#f87171");
+  statCrises.textContent = activeCrisesCount;
+  statCrises.style.color = activeCrisesCount > 0 ? "#fbbf24" : "#34d399";
+  statBudget.textContent = "$" + (totalBudget / 1000000).toFixed(1) + "M";
+
+  // Update Political Inclination Section
+  const overallApproval = totalPopulation > 0 ? Math.round(weightedApproval / totalPopulation) : 65;
+  polPctLabel.textContent = overallApproval + "% projected";
+  polMeterFill.style.width = overallApproval + "%";
+
+  if (overallApproval >= 65) {
+    polVerdictPill.className = "pol-pill pol-pill-lead";
+    polVerdictPill.textContent = "Incumbent Favored";
+    polMeterFill.style.background = "linear-gradient(90deg, #10b981, #34d399)";
+  } else if (overallApproval >= 50) {
+    polVerdictPill.className = "pol-pill pol-pill-tossup";
+    polVerdictPill.textContent = "Competitive Toss-Up";
+    polMeterFill.style.background = "linear-gradient(90deg, #f59e0b, #fbbf24)";
+  } else {
+    polVerdictPill.className = "pol-pill pol-pill-behind";
+    polVerdictPill.textContent = "Trailing Challenger";
+    polMeterFill.style.background = "linear-gradient(90deg, #ef4444, #f87171)";
+  }
+
+  // Render Pros List
+  if (goodThings.length > 0) {
+    sentGoodList.innerHTML = goodThings.map(item => `<li>${item}</li>`).join("");
+  } else {
+    sentGoodList.innerHTML = "<li>No significant voter praise recorded yet.</li>";
+  }
+
+  // Render Cons List
+  if (badThings.length > 0) {
+    sentBadList.innerHTML = badThings.map(item => `<li>${item}</li>`).join("");
+  } else {
+    sentBadList.innerHTML = "<li>No major public grievances reported. High citizen trust!</li>";
+  }
+}
+
+function resetCountdown() {
+  countdownSeconds = 300;
+  updateCountdownDisplay();
+}
+
+function updateCountdownDisplay() {
+  const m = Math.floor(countdownSeconds / 60);
+  const s = countdownSeconds % 60;
+  refreshTimer.textContent = "Sync: " + m + ":" + (s < 10 ? "0" : "") + s;
+}
+
+// 1-second countdown ticker
+setInterval(() => {
+  if (countdownSeconds > 0) {
+    countdownSeconds--;
+    updateCountdownDisplay();
+    if (countdownSeconds === 0) {
+      fetchCityStatus();
+    }
+  }
+}, 1000);
+
+// Initialize on page load
+fetchCityStatus();
+</script>
+</body>
+</html>
