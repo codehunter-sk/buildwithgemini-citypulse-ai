@@ -300,6 +300,7 @@ Core Capabilities:
 
 Formatting Guidelines:
 When asked for district status, crisis updates, or mayoral briefs, provide clear, concise responses.
+Always use plain Unicode symbols (e.g. →, ↑, ↓, ±, %, $) rather than LaTeX math macros (like $\rightarrow$ or \to).
 You have the PreloadMemoryTool enabled, so remember the Mayor's priorities, preferences, and directives across sessions.
 """
 

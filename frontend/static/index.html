@@ -686,12 +686,58 @@ function flattenText(messages) {
   return out.join("\n").trim();
 }
 
+function cleanSymbols(text) {
+  if (!text) return "";
+  const symbolMap = {
+    '\\rightarrow': '→',
+    '\\to': '→',
+    '\\leftarrow': '←',
+    '\\Rightarrow': '⇒',
+    '\\Leftarrow': '⇐',
+    '\\uparrow': '↑',
+    '\\downarrow': '↓',
+    '\\Delta': 'Δ',
+    '\\times': '×',
+    '\\div': '÷',
+    '\\pm': '±',
+    '\\le': '≤',
+    '\\ge': '≥',
+    '\\neq': '≠',
+    '\\approx': '≈',
+    '\\bullet': '•',
+    '\\cdot': '·',
+    '\\dots': '…',
+    '\\%': '%'
+  };
+
+  // Convert $ \command $ or $\command$ into clean symbols
+  let out = text.replace(/\$([^\$\n]+)\$/g, (match, inner) => {
+    let replaced = inner;
+    for (const [cmd, sym] of Object.entries(symbolMap)) {
+      replaced = replaced.split(cmd).join(sym);
+    }
+    if (replaced !== inner) {
+      return replaced.trim();
+    }
+    return match;
+  });
+
+  // Also replace any raw unescaped LaTeX symbol commands
+  for (const [cmd, sym] of Object.entries(symbolMap)) {
+    out = out.split(cmd).join(sym);
+  }
+
+  return out;
+}
+
 function renderReply(b, parts) {
   b.textContent = "";
   const texts = parts.filter(p => p && (p.kind === "text" || (!p.kind && p.text))).map(p => p.text || "");
   const a2ui = parts.filter(p => p && p.kind === "a2ui" && p.data).map(p => p.data);
 
-  const textStr = texts.join("\n\n").trim();
+  let textStr = texts.join("\n\n").trim();
+  textStr = cleanSymbols(textStr);
+
   if (textStr) {
     const textNode = el("div", "reply-content");
     if (typeof marked !== "undefined" && typeof marked.parse === "function") {
